@@ -4,6 +4,7 @@ import { Message } from '../types/chat';
 import { VoiceService } from '../services/voiceService';
 import AttachmentPreview from './AttachmentPreview';
 import ImageMessage from './ImageMessage';
+import MessageContent from './MessageContent';
 
 interface ChatMessageProps {
   message: Message;
@@ -64,7 +65,9 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
               ? 'bg-blue-500 text-white rounded-br-md' 
               : 'bg-gray-100 text-gray-800 rounded-bl-md dark:bg-gray-800 dark:text-gray-200'
           } shadow-sm relative`}>
-            <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.text}</p>
+            <div className="text-sm leading-relaxed">
+              <MessageContent text={message.text} />
+            </div>
             
             {/* AI Generated Image */}
             {message.imageUrl && (

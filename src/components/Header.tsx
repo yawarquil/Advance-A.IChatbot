@@ -23,7 +23,7 @@ const Header: React.FC<HeaderProps> = ({
   const getGradientClass = () => {
     switch (settings.theme) {
       case 'dark':
-        return 'bg-gradient-to-r from-gray-800 to-gray-900';
+        return 'bg-gradient-to-r from-black to-gray-900';
       case 'blue':
         return 'bg-gradient-to-r from-blue-600 to-blue-800';
       case 'purple':

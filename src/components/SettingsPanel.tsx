@@ -26,7 +26,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
 
   const themes = [
     { key: 'light', name: 'Light', color: 'bg-white border-gray-300' },
-    { key: 'dark', name: 'Dark', color: 'bg-gray-800 border-gray-600' },
+    { key: 'dark', name: 'Black Dark', color: 'bg-black border-gray-600' },
     { key: 'blue', name: 'Ocean Blue', color: 'bg-blue-600 border-blue-500' },
     { key: 'purple', name: 'Royal Purple', color: 'bg-purple-600 border-purple-500' },
   ];
