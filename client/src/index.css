@@ -113,13 +113,15 @@
   }
 }
 
-/* Custom scrollbar */
+/* Custom scrollbar positioned to the right corner */
 ::-webkit-scrollbar {
-  width: 6px;
+  width: 8px;
 }
 
 ::-webkit-scrollbar-track {
   background: #f1f1f1;
+  border-radius: 4px;
+  margin: 2px;
 }
 
 .theme-dark ::-webkit-scrollbar-track {
@@ -128,7 +130,9 @@
 
 ::-webkit-scrollbar-thumb {
   background: #c1c1c1;
-  border-radius: 3px;
+  border-radius: 4px;
+  border: 1px solid transparent;
+  background-clip: content-box;
 }
 
 .theme-dark ::-webkit-scrollbar-thumb {
@@ -141,6 +145,16 @@
 
 .theme-dark ::-webkit-scrollbar-thumb:hover {
   background: #666666;
+}
+
+/* Ensure scrollbar appears on the right edge */
+.chat-container {
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.chat-container::-webkit-scrollbar {
+  width: 6px;
 }
 
 /* Enhanced dark theme styles */

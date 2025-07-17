@@ -607,7 +607,7 @@ const App: React.FC = () => {
           
           <div className="flex-1 overflow-hidden">
             <div className="h-full max-w-4xl mx-auto flex flex-col">
-              <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              <div className="flex-1 chat-container p-4 space-y-4">
                 {chatState.messages.map((message, index) => (
                   <ChatMessage
                     key={message.id}

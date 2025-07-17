@@ -42,10 +42,10 @@ const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
 
   return (
     <>
-      {/* Mobile overlay */}
+      {/* Overlay for both mobile and desktop */}
       {isOpen && (
         <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
+          className="fixed inset-0 bg-black bg-opacity-50 z-40"
           onClick={onClose}
         />
       )}
@@ -67,7 +67,7 @@ const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
             </button>
             <button
               onClick={onClose}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors md:hidden"
+              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
             >
               <X className="h-4 w-4 text-gray-600 dark:text-gray-400" />
             </button>
