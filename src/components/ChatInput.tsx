@@ -44,6 +44,13 @@ const ChatInput: React.FC<ChatInputProps> = ({
 
   const handleImageGeneration = () => {
     if (message.trim() && !isLoading) {
+      // Add visual feedback
+      const button = document.querySelector('[title="Generate image"]') as HTMLButtonElement;
+      if (button) {
+        button.classList.add('animate-pulse');
+        setTimeout(() => button.classList.remove('animate-pulse'), 1000);
+      }
+      
       onSendMessage(message.trim(), attachments, true);
       setMessage('');
       setAttachments([]);
@@ -204,11 +211,19 @@ const ChatInput: React.FC<ChatInputProps> = ({
             <button
               type="button"
               onClick={handleImageGeneration}
-              disabled={!message.trim() || isLoading}
-              className="bg-purple-500 text-white p-3 rounded-2xl hover:bg-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors duration-200"
+              disabled={!message.trim() || isLoading || isGeneratingImage}
+              className={`text-white p-3 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all duration-200 ${
+                isGeneratingImage 
+                  ? 'bg-purple-400 animate-pulse' 
+                  : 'bg-purple-500 hover:bg-purple-600 hover:scale-105'
+              }`}
               title="Generate image"
             >
-              <Image className="h-5 w-5" />
+              {isGeneratingImage ? (
+                <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent" />
+              ) : (
+                <Image className="h-5 w-5" />
+              )}
             </button>
           )}
           

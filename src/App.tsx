@@ -271,23 +271,42 @@ const App: React.FC = () => {
       if (generateImage) {
         // Generate image
         const imagePrompt = imageService.current.extractImagePrompt(messageText);
-        const imageUrl = await imageService.current.generateImage(imagePrompt);
         
-        const aiMessage: Message = {
-          id: uuidv4(),
-          type: 'ai',
-          text: `I've generated an image based on your request: "${imagePrompt}"`,
-          timestamp: new Date(),
-          model: 'Image Generator',
-          imageUrl,
-          imagePrompt,
-        };
+        try {
+          const imageUrl = await imageService.current.generateImage(imagePrompt);
+          
+          const aiMessage: Message = {
+            id: uuidv4(),
+            type: 'ai',
+            text: `I've generated an image based on your request: "${imagePrompt}"`,
+            timestamp: new Date(),
+            model: 'AI Image Generator',
+            imageUrl,
+            imagePrompt,
+          };
 
-        setChatState(prev => ({
-          ...prev,
-          messages: [...prev.messages, aiMessage],
-          isGeneratingImage: false,
-        }));
+          setChatState(prev => ({
+            ...prev,
+            messages: [...prev.messages, aiMessage],
+            isGeneratingImage: false,
+          }));
+        } catch (error) {
+          console.error('Image generation failed:', error);
+          
+          const errorMessage: Message = {
+            id: uuidv4(),
+            type: 'ai',
+            text: `Sorry, I couldn't generate an image for "${imagePrompt}". The image generation service might be temporarily unavailable. Please try again later.`,
+            timestamp: new Date(),
+            model: 'AI Image Generator',
+          };
+
+          setChatState(prev => ({
+            ...prev,
+            messages: [...prev.messages, errorMessage],
+            isGeneratingImage: false,
+          }));
+        }
       } else {
         // Generate text response
         const provider = aiService.current.getProvider(settings.aiModel);
