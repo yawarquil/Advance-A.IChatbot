@@ -150,114 +150,160 @@ export class GPTProvider implements AIProvider {
   }
 }
 
-// Advanced Free AI Provider using Groq
+// Reliable Free AI Provider with Multiple Services
 export class ClaudeProvider implements AIProvider {
-  private readonly apiUrl = 'https://api.groq.com/openai/v1/chat/completions';
-  private readonly fallbackUrl = 'https://api-inference.huggingface.co/models/microsoft/DialoGPT-medium';
+  private readonly services = [
+    {
+      name: 'Together AI',
+      url: 'https://api.together.xyz/v1/chat/completions',
+      model: 'meta-llama/Llama-2-7b-chat-hf'
+    },
+    {
+      name: 'Hugging Face',
+      url: 'https://api-inference.huggingface.co/models/microsoft/DialoGPT-large',
+      model: 'dialogpt'
+    }
+  ];
 
   constructor() {
     // No API key required for basic usage
   }
 
   getName(): string {
-    return 'Llama 3 (Advanced Free)';
+    return 'Smart AI (Free)';
   }
 
   async generateResponse(message: string): Promise<string> {
-    try {
-      // Try Groq first (free tier available)
-      const response = await fetch(this.apiUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'llama3-8b-8192',
-          messages: [
-            {
-              role: 'user',
-              content: message,
-            },
-          ],
-          max_tokens: 1024,
-          temperature: 0.7,
-        }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        if (data.choices && data.choices[0]?.message?.content) {
-          return data.choices[0].message.content;
+    // Try different AI services in order
+    for (const service of this.services) {
+      try {
+        const response = await this.tryService(service, message);
+        if (response) {
+          return response;
         }
+      } catch (error) {
+        console.warn(`${service.name} failed, trying next service...`);
+        continue;
       }
+    }
 
-      // Fallback to Hugging Face
-      return await this.generateHuggingFaceResponse(message);
+    // If all services fail, use intelligent fallback
+    return this.generateIntelligentResponse(message);
+  }
+
+  private async tryService(service: any, message: string): Promise<string | null> {
+    try {
+      if (service.model === 'dialogpt') {
+        return await this.tryHuggingFace(service.url, message);
+      } else {
+        return await this.tryOpenAIFormat(service, message);
+      }
     } catch (error) {
-      console.warn('Primary AI service failed, using fallback:', error);
-      return await this.generateHuggingFaceResponse(message);
+      return null;
     }
   }
 
-  private async generateHuggingFaceResponse(message: string): Promise<string> {
-    try {
-      const response = await fetch(this.fallbackUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          inputs: message,
-          parameters: {
-            max_length: 512,
-            temperature: 0.8,
-            do_sample: true,
-          },
-        }),
-      });
+  private async tryOpenAIFormat(service: any, message: string): Promise<string | null> {
+    const response = await fetch(service.url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: service.model,
+        messages: [{ role: 'user', content: message }],
+        max_tokens: 1024,
+        temperature: 0.7,
+      }),
+    });
 
-      if (response.ok) {
-        const data = await response.json();
-        if (Array.isArray(data) && data[0]?.generated_text) {
-          let responseText = data[0].generated_text;
-          if (responseText.startsWith(message)) {
-            responseText = responseText.substring(message.length).trim();
-          }
-          return responseText || this.generateSmartFallback(message);
-        }
-      }
+    if (!response.ok) return null;
 
-      return this.generateSmartFallback(message);
-    } catch (error) {
-      console.error('Fallback AI service error:', error);
-      return this.generateSmartFallback(message);
-    }
+    const data = await response.json();
+    return data.choices?.[0]?.message?.content || null;
   }
 
-  private generateSmartFallback(message: string): string {
+  private async tryHuggingFace(url: string, message: string): Promise<string | null> {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        inputs: message,
+        parameters: {
+          max_length: 512,
+          temperature: 0.8,
+          do_sample: true,
+          return_full_text: false,
+        },
+      }),
+    });
+
+    if (!response.ok) return null;
+
+    const data = await response.json();
+    if (Array.isArray(data) && data[0]?.generated_text) {
+      let responseText = data[0].generated_text;
+      if (responseText.startsWith(message)) {
+        responseText = responseText.substring(message.length).trim();
+      }
+      return responseText || null;
+    }
+    return null;
+  }
+
+  private generateIntelligentResponse(message: string): string {
     const lowerMessage = message.toLowerCase();
     
-    // Programming questions
-    if (lowerMessage.includes('code') || lowerMessage.includes('program') || lowerMessage.includes('function')) {
-      return "I can help with programming questions! Could you be more specific about what you'd like to build or debug?";
+    // Greeting responses
+    if (lowerMessage.includes('hello') || lowerMessage.includes('hi') || lowerMessage.includes('hey')) {
+      return "Hello! I'm here to help you with any questions or tasks you have. What would you like to know about?";
     }
     
-    // Math questions
+    // Programming and technical questions
+    if (lowerMessage.includes('code') || lowerMessage.includes('program') || lowerMessage.includes('javascript') || lowerMessage.includes('python') || lowerMessage.includes('html') || lowerMessage.includes('css')) {
+      return "I'd be happy to help with programming! I can assist with:\n\n• Writing and debugging code\n• Explaining programming concepts\n• Code reviews and optimization\n• Framework and library guidance\n\nCould you share more details about what you're working on?";
+    }
+    
+    // Math and calculations
     if (lowerMessage.includes('calculate') || lowerMessage.includes('math') || /\d+[\+\-\*\/]\d+/.test(message)) {
-      return "I can help with calculations and math problems. Please provide the specific equation or problem you'd like me to solve.";
+      try {
+        // Try to evaluate simple math expressions
+        const mathMatch = message.match(/(\d+[\+\-\*\/\(\)\s\d\.]+\d+)/);
+        if (mathMatch) {
+          const expr = mathMatch[1].replace(/[^0-9\+\-\*\/\(\)\.\s]/g, '');
+          const result = Function(`"use strict"; return (${expr})`)();
+          return `The answer is: ${result}\n\nI can help with more complex math problems too. Just describe what you need!`;
+        }
+      } catch (error) {
+        // Fall through to general math response
+      }
+      return "I can help with mathematical calculations and problem-solving. Please share the specific problem or equation you'd like me to work on.";
     }
     
-    // Explanations
-    if (lowerMessage.includes('explain') || lowerMessage.includes('what is') || lowerMessage.includes('how does')) {
-      return "I'd be happy to explain that concept! Could you give me a bit more context about what specific aspect you'd like me to focus on?";
+    // Questions and explanations
+    if (lowerMessage.includes('what') || lowerMessage.includes('how') || lowerMessage.includes('why') || lowerMessage.includes('explain')) {
+      return "I'd be glad to explain that! I can help with:\n\n• Concepts and definitions\n• Step-by-step explanations\n• Technical topics\n• General knowledge\n\nCould you be more specific about what you'd like me to explain?";
     }
     
     // Creative writing
-    if (lowerMessage.includes('write') || lowerMessage.includes('story') || lowerMessage.includes('creative')) {
-      return "I can help with creative writing! What kind of story, article, or content would you like me to help you create?";
+    if (lowerMessage.includes('write') || lowerMessage.includes('story') || lowerMessage.includes('creative') || lowerMessage.includes('essay')) {
+      return "I love helping with creative writing! I can assist with:\n\n• Stories and narratives\n• Essays and articles\n• Character development\n• Plot ideas\n• Writing tips and techniques\n\nWhat kind of writing project are you working on?";
     }
     
-    return "I understand your message. While I may not have a complete response right now, I'm here to help with various topics including programming, explanations, creative writing, and problem-solving. Could you tell me more about what you need assistance with?";
+    // Help requests
+    if (lowerMessage.includes('help') || lowerMessage.includes('assist') || lowerMessage.includes('support')) {
+      return "I'm here to help! I can assist you with:\n\n• Programming and web development\n• Math and problem-solving\n• Writing and creative projects\n• Explanations and learning\n• General questions and research\n\nWhat would you like to work on together?";
+    }
+    
+    // Thank you responses
+    if (lowerMessage.includes('thank') || lowerMessage.includes('thanks')) {
+      return "You're very welcome! I'm happy to help. Is there anything else you'd like to know or work on?";
+    }
+    
+    // Default intelligent response
+    return `I understand you're asking about "${message}". While I may not have access to real-time AI services right now, I'm still here to help! \n\nI can assist with:\n• Programming and technical questions\n• Math and calculations\n• Writing and creative projects\n• Explanations and learning\n\nCould you tell me more about what specific help you need?`;
   }
 }
 

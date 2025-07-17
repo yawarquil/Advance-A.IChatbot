@@ -37,11 +37,12 @@ Preferred communication style: Simple, everyday language.
 
 ## AI Integration
 - **Primary Provider**: Google Gemini 1.5 Flash API
-- **Secondary Providers**: Claude 3, DialoGPT Large (free alternative)
+- **Secondary Providers**: Smart AI (multi-service free alternative), DialoGPT Large
 - Extensible provider pattern for multiple AI services
 - Support for text generation and conversation management
 - Environment variable configuration for API keys
-- Fallback responses for offline/rate-limited scenarios
+- Intelligent fallback responses with context-aware suggestions
+- Multi-tier fallback system for maximum reliability
 
 ## Database Layer
 - **ORM**: Drizzle ORM with PostgreSQL

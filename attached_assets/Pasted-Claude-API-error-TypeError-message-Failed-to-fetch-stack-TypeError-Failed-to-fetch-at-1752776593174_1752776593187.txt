@@ -1,0 +1,27 @@
+Claude API error: 
+TypeError {}
+message: "Failed to fetch"
+stack: "TypeError: Failed to fetch↵ at window.fetch (https://5ebc0661-fa87-4ce4-9a28-8a7fed26b879-00-vrm0ut6dylus.worf.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:218642)↵ at ClaudeProvider.generateResponse (https://5ebc0661-fa87-4ce4-9a28-8a7fed26b879-00-vrm0ut6dylus.worf.replit.dev/src/services/aiService.ts:132:30)↵ at handleSendMessage (https://5ebc0661-fa87-4ce4-9a28-8a7fed26b879-00-vrm0ut6dylus.worf.replit.dev/src/App.tsx?v=WwcmAuS3dOo7K63QEglhB:299:41)↵ at handleSubmit (https://5ebc0661-fa87-4ce4-9a28-8a7fed26b879-00-vrm0ut6dylus.worf.replit.dev/src/components/ChatInput.tsx:45:7)↵ at handleKeyPress (https://5ebc0661-fa87-4ce4-9a28-8a7fed26b879-00-vrm0ut6dylus.worf.replit.dev/src/components/ChatInput.tsx:68:7)↵ at HTMLUnknownElement.callCallback2 (https://5ebc0661-fa87-4ce4-9a28-8a7fed26b879-00-vrm0ut6dylus.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-PJEEZAML.js?v=c80c4f86:3674:22)↵ at Object.invokeGuardedCallbackDev (https://5ebc0661-fa87-4ce4-9a28-8a7fed26b879-00-vrm0ut6dylus.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-PJEEZAML.js?v=c80c4f86:3699:24)↵ at invokeGuardedCallback (https://5ebc0661-fa87-4ce4-9a28-8a7fed26b879-00-vrm0ut6dylus.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-PJEEZAML.js?v=c80c4f86:3733:39)↵ at invokeGuardedCallbackAndCatchFirstError (https://5ebc0661-fa87-4ce4-9a28-8a7fed26b879-00-vrm0ut6dylus.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-PJEEZAML.js?v=c80c4f86:3736:33)↵ at executeDispatch (https://5ebc0661-fa87-4ce4-9a28-8a7fed26b879-00-vrm0ut6dylus.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-PJEEZAML.js?v=c80c4f86:7014:11)"
+get stack: ƒ ()
+set stack: ƒ ()
+[[Prototype]]: Object
+
+at t.value (https://5ebc0661-fa87-4ce4-9a28-8a7fed26b879-00-vrm0ut6dylus.worf.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:17465)
+at new t (https://5ebc0661-fa87-4ce4-9a28-8a7fed26b879-00-vrm0ut6dylus.worf.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:12630)
+at t.value (https://5ebc0661-fa87-4ce4-9a28-8a7fed26b879-00-vrm0ut6dylus.worf.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:32766)
+at https://5ebc0661-fa87-4ce4-9a28-8a7fed26b879-00-vrm0ut6dylus.worf.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:34400
+Failed to fetch
+[vite] hot updated: /src/App.tsx?v=WwcmAuS3dOo7K63QEglhB
+[vite] hot updated: /src/index.css?v=WwcmAuS3dOo7K63QEglhB
+[vite] hot updated: /src/components/SettingsPanel.tsx
+[vite] hot updated: /src/index.css?v=WwcmAuS3dOo7K63QEglhB
+[vite] hot updated: /src/components/ConversationSidebar.tsx
+[vite] hot updated: /src/index.css?v=WwcmAuS3dOo7K63QEglhB
+[vite] hot updated: /src/components/ConversationSidebar.tsx
+[vite] hot updated: /src/index.css?v=WwcmAuS3dOo7K63QEglhB
+[vite] hot updated: /src/App.tsx?v=WwcmAuS3dOo7K63QEglhB
+[vite] hot updated: /src/index.css?v=WwcmAuS3dOo7K63QEglhB
+Claude API error: 
+TypeError {}
+
+Failed to fetch
