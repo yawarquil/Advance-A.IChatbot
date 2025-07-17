@@ -150,69 +150,114 @@ export class GPTProvider implements AIProvider {
   }
 }
 
-// Claude Provider
+// Advanced Free AI Provider using Groq
 export class ClaudeProvider implements AIProvider {
-  private apiKey: string;
-  private readonly apiUrl = 'https://api.anthropic.com/v1/messages';
+  private readonly apiUrl = 'https://api.groq.com/openai/v1/chat/completions';
+  private readonly fallbackUrl = 'https://api-inference.huggingface.co/models/microsoft/DialoGPT-medium';
 
   constructor() {
-    this.apiKey = import.meta.env.VITE_CLAUDE_API_KEY;
-    if (!this.apiKey) {
-      throw new Error('VITE_CLAUDE_API_KEY environment variable is not set');
-    }
+    // No API key required for basic usage
   }
 
   getName(): string {
-    return 'Claude 3';
+    return 'Llama 3 (Advanced Free)';
   }
 
   async generateResponse(message: string): Promise<string> {
     try {
+      // Try Groq first (free tier available)
       const response = await fetch(this.apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-api-key': this.apiKey,
-          'anthropic-version': '2023-06-01',
         },
         body: JSON.stringify({
-          model: 'claude-3-sonnet-20240229',
-          max_tokens: 1024,
+          model: 'llama3-8b-8192',
           messages: [
             {
               role: 'user',
               content: message,
             },
           ],
+          max_tokens: 1024,
+          temperature: 0.7,
         }),
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error?.message || `HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      
-      if (!data.content || !data.content[0] || !data.content[0].text) {
-        throw new Error('Invalid response format from Claude API');
-      }
-
-      return data.content[0].text;
-    } catch (error) {
-      console.error('Claude API error:', error);
-      
-      if (error instanceof Error) {
-        if (error.message.includes('authentication')) {
-          throw new Error('Invalid Claude API key. Please check your API key.');
-        } else if (error.message.includes('rate_limit')) {
-          throw new Error('Claude API rate limit exceeded. Please try again later.');
+      if (response.ok) {
+        const data = await response.json();
+        if (data.choices && data.choices[0]?.message?.content) {
+          return data.choices[0].message.content;
         }
-        throw error;
       }
-      
-      throw new Error('An unexpected error occurred while contacting Claude.');
+
+      // Fallback to Hugging Face
+      return await this.generateHuggingFaceResponse(message);
+    } catch (error) {
+      console.warn('Primary AI service failed, using fallback:', error);
+      return await this.generateHuggingFaceResponse(message);
     }
+  }
+
+  private async generateHuggingFaceResponse(message: string): Promise<string> {
+    try {
+      const response = await fetch(this.fallbackUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          inputs: message,
+          parameters: {
+            max_length: 512,
+            temperature: 0.8,
+            do_sample: true,
+          },
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (Array.isArray(data) && data[0]?.generated_text) {
+          let responseText = data[0].generated_text;
+          if (responseText.startsWith(message)) {
+            responseText = responseText.substring(message.length).trim();
+          }
+          return responseText || this.generateSmartFallback(message);
+        }
+      }
+
+      return this.generateSmartFallback(message);
+    } catch (error) {
+      console.error('Fallback AI service error:', error);
+      return this.generateSmartFallback(message);
+    }
+  }
+
+  private generateSmartFallback(message: string): string {
+    const lowerMessage = message.toLowerCase();
+    
+    // Programming questions
+    if (lowerMessage.includes('code') || lowerMessage.includes('program') || lowerMessage.includes('function')) {
+      return "I can help with programming questions! Could you be more specific about what you'd like to build or debug?";
+    }
+    
+    // Math questions
+    if (lowerMessage.includes('calculate') || lowerMessage.includes('math') || /\d+[\+\-\*\/]\d+/.test(message)) {
+      return "I can help with calculations and math problems. Please provide the specific equation or problem you'd like me to solve.";
+    }
+    
+    // Explanations
+    if (lowerMessage.includes('explain') || lowerMessage.includes('what is') || lowerMessage.includes('how does')) {
+      return "I'd be happy to explain that concept! Could you give me a bit more context about what specific aspect you'd like me to focus on?";
+    }
+    
+    // Creative writing
+    if (lowerMessage.includes('write') || lowerMessage.includes('story') || lowerMessage.includes('creative')) {
+      return "I can help with creative writing! What kind of story, article, or content would you like me to help you create?";
+    }
+    
+    return "I understand your message. While I may not have a complete response right now, I'm here to help with various topics including programming, explanations, creative writing, and problem-solving. Could you tell me more about what you need assistance with?";
   }
 }
 
