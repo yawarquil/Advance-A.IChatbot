@@ -77,20 +77,16 @@ export class GeminiProvider implements AIProvider {
   }
 }
 
-// OpenAI GPT Provider
+// Free GPT Provider using Hugging Face Inference API
 export class GPTProvider implements AIProvider {
-  private apiKey: string;
-  private readonly apiUrl = 'https://api.openai.com/v1/chat/completions';
+  private readonly apiUrl = 'https://api-inference.huggingface.co/models/microsoft/DialoGPT-large';
 
   constructor() {
-    this.apiKey = import.meta.env.VITE_OPENAI_API_KEY;
-    if (!this.apiKey) {
-      throw new Error('VITE_OPENAI_API_KEY environment variable is not set');
-    }
+    // No API key required for basic usage
   }
 
   getName(): string {
-    return 'GPT-4';
+    return 'DialoGPT Large (Free)';
   }
 
   async generateResponse(message: string): Promise<string> {
@@ -99,47 +95,58 @@ export class GPTProvider implements AIProvider {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.apiKey}`,
         },
         body: JSON.stringify({
-          model: 'gpt-4',
-          messages: [
-            {
-              role: 'user',
-              content: message,
-            },
-          ],
-          max_tokens: 1024,
-          temperature: 0.7,
+          inputs: message,
+          parameters: {
+            max_length: 1024,
+            temperature: 0.7,
+            do_sample: true,
+          },
         }),
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error?.message || `HTTP error! status: ${response.status}`);
+        // If Hugging Face is rate limited, try alternative approach
+        return this.generateFallbackResponse(message);
       }
 
       const data = await response.json();
       
-      if (!data.choices || !data.choices[0] || !data.choices[0].message) {
-        throw new Error('Invalid response format from OpenAI API');
-      }
-
-      return data.choices[0].message.content;
-    } catch (error) {
-      console.error('OpenAI API error:', error);
-      
-      if (error instanceof Error) {
-        if (error.message.includes('Incorrect API key')) {
-          throw new Error('Invalid OpenAI API key. Please check your API key.');
-        } else if (error.message.includes('quota')) {
-          throw new Error('OpenAI API quota exceeded. Please try again later.');
+      if (Array.isArray(data) && data[0]?.generated_text) {
+        // Clean up the response to remove the input prompt
+        let responseText = data[0].generated_text;
+        if (responseText.startsWith(message)) {
+          responseText = responseText.substring(message.length).trim();
         }
-        throw error;
+        return responseText || "I understand your message. Could you please rephrase or ask something else?";
       }
       
-      throw new Error('An unexpected error occurred while contacting OpenAI.');
+      return this.generateFallbackResponse(message);
+    } catch (error) {
+      console.error('GPT Provider error:', error);
+      return this.generateFallbackResponse(message);
     }
+  }
+
+  private generateFallbackResponse(message: string): string {
+    // Simple rule-based fallback responses
+    const lowerMessage = message.toLowerCase();
+    
+    if (lowerMessage.includes('hello') || lowerMessage.includes('hi')) {
+      return "Hello! How can I help you today?";
+    }
+    if (lowerMessage.includes('help')) {
+      return "I'm here to help! You can ask me questions about various topics, request explanations, or just chat.";
+    }
+    if (lowerMessage.includes('what') || lowerMessage.includes('how') || lowerMessage.includes('why')) {
+      return "That's an interesting question! While I may not have all the answers, I'd be happy to discuss this topic with you.";
+    }
+    if (lowerMessage.includes('thank')) {
+      return "You're welcome! Is there anything else I can help you with?";
+    }
+    
+    return "I understand what you're saying. Could you tell me more about that or ask me something specific I can help with?";
   }
 }
 

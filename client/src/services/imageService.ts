@@ -3,17 +3,37 @@ export class ImageService {
 
   async generateImage(prompt: string): Promise<string> {
     try {
-      // Using Pollinations.ai - a reliable free AI image generation service
-      const encodedPrompt = encodeURIComponent(prompt);
-      const imageUrl = `${this.POLLINATIONS_API_URL}/${encodedPrompt}?width=512&height=512&model=flux&enhance=true&nologo=true`;
+      // Using multiple free image generation services with fallbacks
+      const services = [
+        // Pollinations.ai
+        () => {
+          const encodedPrompt = encodeURIComponent(prompt);
+          return `${this.POLLINATIONS_API_URL}/${encodedPrompt}?width=512&height=512&model=flux&enhance=true&nologo=true`;
+        },
+        // Alternative service
+        () => {
+          const encodedPrompt = encodeURIComponent(prompt.substring(0, 100));
+          return `https://image.pollinations.ai/prompt/${encodedPrompt}?width=512&height=512&seed=${Math.floor(Math.random() * 1000000)}`;
+        },
+        // Fallback to placeholder service
+        () => this.generateFallbackImage(prompt)
+      ];
+
+      for (const getUrl of services) {
+        try {
+          const imageUrl = getUrl();
+          await this.testImageLoad(imageUrl);
+          return imageUrl;
+        } catch (error) {
+          console.warn('Image service failed, trying next...', error);
+          continue;
+        }
+      }
       
-      // Test if the image loads properly
-      await this.testImageLoad(imageUrl);
-      
-      return imageUrl;
+      // If all services fail, return a placeholder
+      return this.generateFallbackImage(prompt);
     } catch (error) {
       console.error('Image generation error:', error);
-      // Fallback to alternative service
       return this.generateFallbackImage(prompt);
     }
   }
