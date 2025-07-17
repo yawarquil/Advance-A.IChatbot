@@ -1,17 +1,24 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Loader2, Mic, MicOff, Paperclip, X } from 'lucide-react';
+import { Send, Loader2, Mic, MicOff, Paperclip, X, Image } from 'lucide-react';
 import { VoiceService } from '../services/voiceService';
 import { FileService } from '../services/fileService';
+import { ImageService } from '../services/imageService';
 import { Attachment } from '../types/chat';
 import AttachmentPreview from './AttachmentPreview';
 
 interface ChatInputProps {
-  onSendMessage: (message: string, attachments?: Attachment[]) => void;
+  onSendMessage: (message: string, attachments?: Attachment[], generateImage?: boolean) => void;
   isLoading: boolean;
   voiceEnabled: boolean;
+  imageGeneration: boolean;
 }
 
-const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, isLoading, voiceEnabled }) => {
+const ChatInput: React.FC<ChatInputProps> = ({ 
+  onSendMessage, 
+  isLoading, 
+  voiceEnabled, 
+  imageGeneration 
+}) => {
   const [message, setMessage] = useState('');
   const [isListening, setIsListening] = useState(false);
   const [attachments, setAttachments] = useState<Attachment[]>([]);
@@ -20,16 +27,26 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, isLoading, voiceEn
   const fileInputRef = useRef<HTMLInputElement>(null);
   const voiceService = useRef(new VoiceService());
   const fileService = useRef(new FileService());
+  const imageService = useRef(new ImageService());
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if ((message.trim() || attachments.length > 0) && !isLoading) {
-      onSendMessage(message.trim(), attachments);
+      const shouldGenerateImage = imageGeneration && imageService.current.isImageGenerationPrompt(message.trim());
+      onSendMessage(message.trim(), attachments, shouldGenerateImage);
       setMessage('');
       setAttachments([]);
       if (textareaRef.current) {
         textareaRef.current.style.height = 'auto';
       }
+    }
+  };
+
+  const handleImageGeneration = () => {
+    if (message.trim() && !isLoading) {
+      onSendMessage(message.trim(), attachments, true);
+      setMessage('');
+      setAttachments([]);
     }
   };
 
@@ -180,6 +197,18 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, isLoading, voiceEn
               ) : (
                 <Mic className="h-5 w-5" />
               )}
+            </button>
+          )}
+          
+          {imageGeneration && (
+            <button
+              type="button"
+              onClick={handleImageGeneration}
+              disabled={!message.trim() || isLoading}
+              className="bg-purple-500 text-white p-3 rounded-2xl hover:bg-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors duration-200"
+              title="Generate image"
+            >
+              <Image className="h-5 w-5" />
             </button>
           )}
           

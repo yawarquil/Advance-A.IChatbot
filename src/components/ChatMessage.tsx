@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Bot, User, Volume2, VolumeX, RotateCcw } from 'lucide-react';
+import { Bot, User, Volume2, VolumeX, RotateCcw, Image } from 'lucide-react';
 import { Message } from '../types/chat';
 import { VoiceService } from '../services/voiceService';
 import AttachmentPreview from './AttachmentPreview';
+import ImageMessage from './ImageMessage';
 
 interface ChatMessageProps {
   message: Message;
@@ -64,6 +65,14 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
               : 'bg-gray-100 text-gray-800 rounded-bl-md dark:bg-gray-800 dark:text-gray-200'
           } shadow-sm relative`}>
             <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.text}</p>
+            
+            {/* AI Generated Image */}
+            {message.imageUrl && (
+              <ImageMessage
+                imageUrl={message.imageUrl}
+                imagePrompt={message.imagePrompt}
+              />
+            )}
             
             {/* Attachments */}
             {message.attachments && message.attachments.length > 0 && (

@@ -4,12 +4,16 @@ export interface Message {
   text: string;
   timestamp: Date;
   model?: string;
+  attachments?: Attachment[];
+  imageUrl?: string; // For AI-generated images
+  imagePrompt?: string; // Original prompt for image generation
 }
 
 export interface ChatState {
   messages: Message[];
   isLoading: boolean;
   error: string | null;
+  isGeneratingImage?: boolean;
 }
 
 export interface Settings {
@@ -21,6 +25,7 @@ export interface Settings {
   voicePitch: number;
   autoScroll: boolean;
   persistHistory: boolean;
+  imageGeneration: boolean;
 }
 
 export interface Conversation {
@@ -30,6 +35,7 @@ export interface Conversation {
   createdAt: Date;
   updatedAt: Date;
   attachments?: Attachment[];
+  userId?: string; // For database storage
 }
 
 export interface Attachment {
@@ -39,4 +45,17 @@ export interface Attachment {
   size: number;
   url: string;
   content?: string; // For text files or base64 for images
+}
+
+export interface User {
+  id: string;
+  email: string;
+  createdAt: Date;
+  settings?: Settings;
+}
+
+export interface AuthState {
+  user: User | null;
+  isLoading: boolean;
+  error: string | null;
 }

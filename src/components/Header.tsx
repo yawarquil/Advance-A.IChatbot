@@ -1,13 +1,23 @@
 import React from 'react';
-import { Bot, MessageCircle, Settings, Menu } from 'lucide-react';
+import { Bot, MessageCircle, Settings, Menu, User, LogOut } from 'lucide-react';
 import { useThemeContext } from './ThemeProvider';
+import { User as UserType } from '../types/chat';
 
 interface HeaderProps {
   onSettingsClick: () => void;
   onMenuClick: () => void;
+  user?: UserType | null;
+  onSignIn?: () => void;
+  onSignOut?: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ onSettingsClick, onMenuClick }) => {
+const Header: React.FC<HeaderProps> = ({ 
+  onSettingsClick, 
+  onMenuClick, 
+  user, 
+  onSignIn, 
+  onSignOut 
+}) => {
   const { settings } = useThemeContext();
 
   const getGradientClass = () => {
@@ -47,6 +57,30 @@ const Header: React.FC<HeaderProps> = ({ onSettingsClick, onMenuClick }) => {
             <MessageCircle className="h-5 w-5 text-blue-200" />
             <span className="text-sm text-blue-100">Always here to help</span>
           </div>
+          
+          {user ? (
+            <div className="flex items-center space-x-3">
+              <div className="hidden sm:flex items-center space-x-2">
+                <User className="h-4 w-4 text-blue-200" />
+                <span className="text-sm text-blue-100">{user.email}</span>
+              </div>
+              <button
+                onClick={onSignOut}
+                className="bg-white/20 p-2 rounded-full hover:bg-white/30 transition-colors"
+                title="Sign out"
+              >
+                <LogOut className="h-4 w-4" />
+              </button>
+            </div>
+          ) : onSignIn ? (
+            <button
+              onClick={onSignIn}
+              className="bg-white/20 px-3 py-1 rounded-full hover:bg-white/30 transition-colors text-sm"
+            >
+              Sign In
+            </button>
+          ) : null}
+          
           <button
             onClick={onSettingsClick}
             className="bg-white/20 p-2 rounded-full hover:bg-white/30 transition-colors"
