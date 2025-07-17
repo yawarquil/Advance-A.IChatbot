@@ -81,6 +81,12 @@ const App: React.FC = () => {
       try {
         const user = await authService.current!.getCurrentUser();
         setAuthState({ user, isLoading: false, error: null });
+        
+        // Update database service token when user is authenticated
+        if (user && databaseService.current) {
+          const token = localStorage.getItem('auth_token');
+          databaseService.current.updateToken(token);
+        }
       } catch (error) {
         setAuthState({ user: null, isLoading: false, error: null });
       }
@@ -90,6 +96,12 @@ const App: React.FC = () => {
 
     const { data: { subscription } } = authService.current.onAuthStateChange((user) => {
       setAuthState(prev => ({ ...prev, user }));
+      
+      // Update database service token when auth state changes
+      if (databaseService.current) {
+        const token = user ? localStorage.getItem('auth_token') : null;
+        databaseService.current.updateToken(token);
+      }
     });
 
     return () => subscription.unsubscribe();

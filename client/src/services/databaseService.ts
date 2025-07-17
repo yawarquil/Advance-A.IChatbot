@@ -1,49 +1,59 @@
-import { createClient } from '@supabase/supabase-js';
 import { Conversation, Settings, Message } from '../types/chat';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
 export class DatabaseService {
-  private supabase;
+  private token: string | null = null;
 
   constructor() {
-    if (!supabaseUrl || !supabaseKey) {
-      throw new Error('Supabase configuration missing. Please set up Supabase connection.');
+    this.token = localStorage.getItem('auth_token');
+  }
+
+  private async makeRequest(url: string, options: RequestInit = {}): Promise<Response> {
+    const headers: HeadersInit = {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    };
+
+    if (this.token) {
+      headers['Authorization'] = `Bearer ${this.token}`;
     }
-    this.supabase = createClient(supabaseUrl, supabaseKey);
+
+    const response = await fetch(url, {
+      ...options,
+      headers,
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ message: 'Network error' }));
+      throw new Error(error.message || 'Request failed');
+    }
+
+    return response;
+  }
+
+  // Update token when it changes
+  updateToken(token: string | null): void {
+    this.token = token;
   }
 
   // Conversations
   async saveConversation(conversation: Conversation, userId: string): Promise<void> {
-    const { error } = await this.supabase
-      .from('conversations')
-      .upsert({
-        id: conversation.id,
-        user_id: userId,
+    const response = await this.makeRequest('/api/conversations', {
+      method: 'POST',
+      body: JSON.stringify({
         title: conversation.title,
         messages: conversation.messages,
-        created_at: conversation.createdAt.toISOString(),
-        updated_at: conversation.updatedAt.toISOString(),
-      });
+        user_id: userId,
+      }),
+    });
 
-    if (error) {
-      throw new Error(`Failed to save conversation: ${error.message}`);
-    }
+    await response.json();
   }
 
   async loadConversations(userId: string): Promise<Conversation[]> {
-    const { data, error } = await this.supabase
-      .from('conversations')
-      .select('*')
-      .eq('user_id', userId)
-      .order('updated_at', { ascending: false });
+    const response = await this.makeRequest('/api/conversations');
+    const data = await response.json();
 
-    if (error) {
-      throw new Error(`Failed to load conversations: ${error.message}`);
-    }
-
-    return (data || []).map(conv => ({
+    return data.map((conv: any) => ({
       id: conv.id,
       title: conv.title,
       messages: conv.messages.map((msg: any) => ({
@@ -57,90 +67,55 @@ export class DatabaseService {
   }
 
   async deleteConversation(conversationId: string, userId: string): Promise<void> {
-    const { error } = await this.supabase
-      .from('conversations')
-      .delete()
-      .eq('id', conversationId)
-      .eq('user_id', userId);
-
-    if (error) {
-      throw new Error(`Failed to delete conversation: ${error.message}`);
-    }
+    await this.makeRequest(`/api/conversations/${conversationId}`, {
+      method: 'DELETE',
+    });
   }
 
   // User Settings
   async saveUserSettings(userId: string, settings: Settings): Promise<void> {
-    const { error } = await this.supabase
-      .from('user_settings')
-      .upsert({
-        user_id: userId,
-        settings: settings,
-        updated_at: new Date().toISOString(),
-      });
-
-    if (error) {
-      throw new Error(`Failed to save settings: ${error.message}`);
-    }
+    await this.makeRequest('/api/settings', {
+      method: 'POST',
+      body: JSON.stringify({ settings }),
+    });
   }
 
   async loadUserSettings(userId: string): Promise<Settings | null> {
-    const { data, error } = await this.supabase
-      .from('user_settings')
-      .select('settings')
-      .eq('user_id', userId)
-      .single();
-
-    if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
-      throw new Error(`Failed to load settings: ${error.message}`);
+    try {
+      const response = await this.makeRequest('/api/settings');
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      // No settings found
+      return null;
     }
-
-    return data?.settings || null;
   }
 
   // Current conversation for quick access
   async saveCurrentConversation(userId: string, messages: Message[]): Promise<void> {
-    const { error } = await this.supabase
-      .from('current_conversations')
-      .upsert({
-        user_id: userId,
-        messages: messages,
-        updated_at: new Date().toISOString(),
-      });
-
-    if (error) {
-      throw new Error(`Failed to save current conversation: ${error.message}`);
-    }
+    await this.makeRequest('/api/current-conversation', {
+      method: 'POST',
+      body: JSON.stringify({ messages }),
+    });
   }
 
   async loadCurrentConversation(userId: string): Promise<Message[]> {
-    const { data, error } = await this.supabase
-      .from('current_conversations')
-      .select('messages')
-      .eq('user_id', userId)
-      .single();
+    try {
+      const response = await this.makeRequest('/api/current-conversation');
+      const data = await response.json();
 
-    if (error && error.code !== 'PGRST116') {
-      throw new Error(`Failed to load current conversation: ${error.message}`);
-    }
-
-    if (!data?.messages) {
+      return data.map((msg: any) => ({
+        ...msg,
+        timestamp: new Date(msg.timestamp),
+      }));
+    } catch (error) {
       return [];
     }
-
-    return data.messages.map((msg: any) => ({
-      ...msg,
-      timestamp: new Date(msg.timestamp),
-    }));
   }
 
   async clearCurrentConversation(userId: string): Promise<void> {
-    const { error } = await this.supabase
-      .from('current_conversations')
-      .delete()
-      .eq('user_id', userId);
-
-    if (error) {
-      throw new Error(`Failed to clear current conversation: ${error.message}`);
-    }
+    await this.makeRequest('/api/current-conversation', {
+      method: 'DELETE',
+    });
   }
 }

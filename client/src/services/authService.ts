@@ -1,93 +1,124 @@
-import { createClient } from '@supabase/supabase-js';
-import { User, AuthState } from '../types/chat';
-
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+import { User } from '../types/chat';
 
 export class AuthService {
-  private supabase;
+  private token: string | null = null;
+  private authListeners: ((user: User | null) => void)[] = [];
 
   constructor() {
-    if (!supabaseUrl || !supabaseKey) {
-      throw new Error('Supabase configuration missing. Please set up Supabase connection.');
+    // Load token from localStorage on initialization
+    this.token = localStorage.getItem('auth_token');
+  }
+
+  private async makeRequest(url: string, options: RequestInit = {}): Promise<Response> {
+    const headers: HeadersInit = {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    };
+
+    if (this.token) {
+      headers['Authorization'] = `Bearer ${this.token}`;
     }
-    this.supabase = createClient(supabaseUrl, supabaseKey);
+
+    const response = await fetch(url, {
+      ...options,
+      headers,
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ message: 'Network error' }));
+      throw new Error(error.message || 'Request failed');
+    }
+
+    return response;
+  }
+
+  private notifyAuthListeners(user: User | null): void {
+    this.authListeners.forEach(callback => callback(user));
   }
 
   async signUp(email: string, password: string): Promise<User> {
-    const { data, error } = await this.supabase.auth.signUp({
-      email,
-      password,
+    const response = await this.makeRequest('/api/auth/register', {
+      method: 'POST',
+      body: JSON.stringify({ email, password }),
     });
 
-    if (error) {
-      throw new Error(error.message);
-    }
-
-    if (!data.user) {
-      throw new Error('Failed to create user account');
-    }
-
-    return {
-      id: data.user.id,
-      email: data.user.email!,
-      createdAt: new Date(data.user.created_at),
+    const { user, token } = await response.json();
+    this.token = token;
+    localStorage.setItem('auth_token', token);
+    
+    const userData = {
+      id: user.id,
+      email: user.email,
+      createdAt: new Date(user.createdAt),
     };
+
+    this.notifyAuthListeners(userData);
+    return userData;
   }
 
   async signIn(email: string, password: string): Promise<User> {
-    const { data, error } = await this.supabase.auth.signInWithPassword({
-      email,
-      password,
+    const response = await this.makeRequest('/api/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ email, password }),
     });
 
-    if (error) {
-      throw new Error(error.message);
-    }
-
-    if (!data.user) {
-      throw new Error('Failed to sign in');
-    }
-
-    return {
-      id: data.user.id,
-      email: data.user.email!,
-      createdAt: new Date(data.user.created_at),
+    const { user, token } = await response.json();
+    this.token = token;
+    localStorage.setItem('auth_token', token);
+    
+    const userData = {
+      id: user.id,
+      email: user.email,
+      createdAt: new Date(user.createdAt),
     };
+
+    this.notifyAuthListeners(userData);
+    return userData;
   }
 
   async signOut(): Promise<void> {
-    const { error } = await this.supabase.auth.signOut();
-    if (error) {
-      throw new Error(error.message);
-    }
+    this.token = null;
+    localStorage.removeItem('auth_token');
+    this.notifyAuthListeners(null);
   }
 
   async getCurrentUser(): Promise<User | null> {
-    const { data: { user } } = await this.supabase.auth.getUser();
-    
-    if (!user) {
+    if (!this.token) {
       return null;
     }
 
-    return {
-      id: user.id,
-      email: user.email!,
-      createdAt: new Date(user.created_at),
-    };
+    try {
+      const response = await this.makeRequest('/api/auth/me');
+      const { user } = await response.json();
+      
+      return {
+        id: user.id,
+        email: user.email,
+        createdAt: new Date(user.createdAt),
+      };
+    } catch (error) {
+      // Token might be expired or invalid
+      this.token = null;
+      localStorage.removeItem('auth_token');
+      return null;
+    }
   }
 
   onAuthStateChange(callback: (user: User | null) => void) {
-    return this.supabase.auth.onAuthStateChange((event, session) => {
-      if (session?.user) {
-        callback({
-          id: session.user.id,
-          email: session.user.email!,
-          createdAt: new Date(session.user.created_at),
-        });
-      } else {
-        callback(null);
+    this.authListeners.push(callback);
+    
+    // Return unsubscribe function
+    return {
+      data: {
+        subscription: {
+          unsubscribe: () => {
+            const index = this.authListeners.indexOf(callback);
+            if (index > -1) {
+              this.authListeners.splice(index, 1);
+            }
+          }
+        }
       }
-    });
+    };
   }
 }
