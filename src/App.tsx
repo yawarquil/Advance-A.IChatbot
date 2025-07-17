@@ -635,6 +635,7 @@ const App: React.FC = () => {
           <ChatInput 
             onSendMessage={handleSendMessage}
             isLoading={chatState.isLoading || chatState.isGeneratingImage}
+            isGeneratingImage={chatState.isGeneratingImage}
             voiceEnabled={settings.voiceEnabled}
             imageGeneration={settings.imageGeneration}
           />

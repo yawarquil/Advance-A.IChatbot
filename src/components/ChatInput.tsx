@@ -9,6 +9,7 @@ import AttachmentPreview from './AttachmentPreview';
 interface ChatInputProps {
   onSendMessage: (message: string, attachments?: Attachment[], generateImage?: boolean) => void;
   isLoading: boolean;
+  isGeneratingImage?: boolean;
   voiceEnabled: boolean;
   imageGeneration: boolean;
 }
@@ -16,6 +17,7 @@ interface ChatInputProps {
 const ChatInput: React.FC<ChatInputProps> = ({ 
   onSendMessage, 
   isLoading, 
+  isGeneratingImage = false,
   voiceEnabled, 
   imageGeneration 
 }) => {
