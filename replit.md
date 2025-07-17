@@ -1,6 +1,12 @@
 # Overview
 
-This is a modern full-stack AI chat application built with React, Express, and TypeScript. The application provides a conversational AI interface with support for multiple AI providers, voice interaction, image generation, file attachments, and persistent conversation history. The system features user authentication, real-time chat functionality, and comprehensive settings management.
+This is a modern full-stack AI chat application built with React, Express, and TypeScript. The application provides a conversational AI interface with support for multiple AI providers (Gemini, Claude, DialoGPT), voice interaction, image generation, file attachments, and persistent conversation history. The system features user authentication, real-time chat functionality, and comprehensive settings management.
+
+**Migration Status**: Successfully migrated from Bolt to Replit environment (January 2025)
+- Replaced Supabase with PostgreSQL/Drizzle ORM
+- Implemented JWT-based authentication
+- Replaced non-working OpenAI API with DialoGPT alternative
+- All core features functional and tested
 
 # User Preferences
 
@@ -31,9 +37,11 @@ Preferred communication style: Simple, everyday language.
 
 ## AI Integration
 - **Primary Provider**: Google Gemini 1.5 Flash API
+- **Secondary Providers**: Claude 3, DialoGPT Large (free alternative)
 - Extensible provider pattern for multiple AI services
 - Support for text generation and conversation management
 - Environment variable configuration for API keys
+- Fallback responses for offline/rate-limited scenarios
 
 ## Database Layer
 - **ORM**: Drizzle ORM with PostgreSQL
